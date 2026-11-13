@@ -120,7 +120,12 @@ int CalculatorWindow::run() {
 
     sf::Text hint(font, "Exemplos:  3x^2 + 5ln(x)   |   4x^-2   |   2x^1.5 - 7", 16);
     hint.setFillColor(kMuted);
-    hint.setPosition({30.f, 62.f});
+    hint.setPosition({ 30.f, 54.f });
+
+    // Lembrete da notacao rigida (evita erros comuns de digitacao).
+    sf::Text syntaxHint(font, "Sintaxe:  coeficiente antes do x   |   ln(x) com parenteses   |   1/x = x^-1", 16);
+    syntaxHint.setFillColor(kMuted);
+    syntaxHint.setPosition({ 30.f, 76.f });
 
     sf::Text prefix(font, "f(x) =", 24);
     prefix.setFillColor(kText);

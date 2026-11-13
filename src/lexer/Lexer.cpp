@@ -52,7 +52,7 @@ std::vector<Token> Lexer::tokenize(const std::string& input) const {
                 fail("numero decimal incompleto");
             }
             const std::string lexeme = input.substr(start, i - start);
-            tokens.push_back(Token::make(TokenType::Number, lexeme, std::stod(lexeme)));
+            tokens.push_back(Token::make(TokenType::Number, lexeme, std::stod(lexeme), start + 1));
             continue;
         }
 
@@ -63,26 +63,32 @@ std::vector<Token> Lexer::tokenize(const std::string& input) const {
             }
             const std::string lexeme = input.substr(start, i - start);
             if (lexeme == "x") {
-                tokens.push_back(Token::make(TokenType::Variable, lexeme));
+                tokens.push_back(Token::make(TokenType::Variable, lexeme, 0.0, start + 1));
             } else {
-                tokens.push_back(Token::make(TokenType::Identifier, lexeme));
+                tokens.push_back(Token::make(TokenType::Identifier, lexeme, 0.0, start + 1));
             }
             continue;
         }
 
+        const std::size_t pos = i + 1;
         switch (c) {
-            case '^': tokens.push_back(Token::make(TokenType::Caret, "^")); break;
-            case '+': tokens.push_back(Token::make(TokenType::Plus, "+")); break;
-            case '-': tokens.push_back(Token::make(TokenType::Minus, "-")); break;
-            case '(': tokens.push_back(Token::make(TokenType::OpenParen, "(")); break;
-            case ')': tokens.push_back(Token::make(TokenType::CloseParen, ")")); break;
-            default:
-                fail(std::string("caractere invalido '") + c + "'");
+        case '^': tokens.push_back(Token::make(TokenType::Caret, "^", 0.0, pos)); break;
+        case '+': tokens.push_back(Token::make(TokenType::Plus, "+", 0.0, pos)); break;
+        case '-': tokens.push_back(Token::make(TokenType::Minus, "-", 0.0, pos)); break;
+        case '(': tokens.push_back(Token::make(TokenType::OpenParen, "(", 0.0, pos)); break;
+        case ')': tokens.push_back(Token::make(TokenType::CloseParen, ")", 0.0, pos)); break;
+        case '/':
+            throw SyntaxError(
+                "Erro sintatico: o operador '/' nao e suportado (posicao " +
+                std::to_string(pos) + "). Escreva a divisao como expoente "
+                "negativo: 1/x = x^-1, 3/x^2 = 3x^-2.");
+        default:
+            fail(std::string("caractere invalido '") + c + "'");
         }
         ++i;
     }
 
-    tokens.push_back(Token::make(TokenType::End, ""));
+    tokens.push_back(Token::make(TokenType::End, "", 0.0, input.size()));
     return tokens;
 }
 

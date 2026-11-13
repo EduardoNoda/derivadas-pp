@@ -21,7 +21,7 @@ public:
 
     bool atEnd() const { return peek().type == TokenType::End; }
 
-    std::size_t position() const { return index_ + 1; }
+    std::size_t position() const { return peek().position; }
 
 private:
     const std::vector<Token>& tokens_;
@@ -81,6 +81,21 @@ ParsedTerm Parser::parseTerm(Cursor& cursor, double sign) const {
         term = ParsedTerm::power(coefficient, exponent);
     } else if (next == TokenType::Identifier) {
         const std::string name = cursor.advance().lexeme;
+        if (cursor.peek().type != TokenType::OpenParen) {
+            // Ex.: "lnx", "sinx": funcoes exigem parenteses na notacao rigida.
+            if (name == "ln") {
+                throw SyntaxError("Erro sintatico: era esperado '(' apos 'ln' na posicao " +
+                    std::to_string(cursor.position()) +
+                    ". Escreva ln(x), com parenteses.");
+            }
+            std::string message = "Erro sintatico: '" + name + "' nao e reconhecido. "
+                "Funcoes exigem parenteses, ex.: ln(x); "
+                "a variavel e apenas 'x'.";
+            if (name.rfind("ln", 0) == 0) {
+                message += " Voce quis dizer ln(x)?";
+            }
+            throw SyntaxError(message);
+        }
         if (name != "ln") {
             throw UnknownFunctionError(name);
         }
@@ -88,6 +103,11 @@ ParsedTerm Parser::parseTerm(Cursor& cursor, double sign) const {
         expect(cursor, TokenType::Variable, "era esperado 'x' dentro de ln(...)");
         expect(cursor, TokenType::CloseParen, "era esperado ')' apos 'x'");
         term = ParsedTerm::logarithmic(coefficient);
+    } else if (hasNumber && next == TokenType::Caret) {
+        throw SyntaxError("Erro sintatico: o expoente so pode ser aplicado a variavel x "
+        "(posicao " + std::to_string(cursor.position()) +
+        "). Escreva 10x^3, por exemplo, para uma potencia de x; para uma "
+        "constante, digite apenas o numero.");
     } else if (hasNumber) {
         term = ParsedTerm::power(coefficient, 0.0);
     } else {
